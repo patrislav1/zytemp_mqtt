@@ -34,7 +34,7 @@ class ZyTemp():
     def __del__(self):
         self.h.close()
 
-    def run(self):
+    def run(self, mqtt):
         while True:
             try:
                 r = self.h.read(8)
@@ -71,6 +71,10 @@ class ZyTemp():
 
             log.log(log.INFO, f'{m_name}: {m_reading:g} {m_unit}' +
                     (' (ignored)' if ignore else ''))
+
+            if not ignore:
+                mqtt.publish(m_name, m_reading)
+            mqtt.run(0.1)
 
             if m_name == 'CO2' and self.measurements_to_ignore:
                 self.measurements_to_ignore -= 1

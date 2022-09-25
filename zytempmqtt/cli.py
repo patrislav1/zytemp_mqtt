@@ -1,4 +1,5 @@
 from .ZyTemp import get_dev
+from .mqtt import MqttClient
 import time
 import sys
 import signal
@@ -21,13 +22,17 @@ def main():
     log.basicConfig(level=log.DEBUG if args.debug else log.INFO)
 
     signal.signal(signal.SIGINT, signal_handler)
+
+    mqtt = MqttClient()
+    mqtt.connect()
+
     try:
         while True:
             zt = get_dev()
             if not zt:
                 time.sleep(5)
                 continue
-            zt.run()
+            zt.run(mqtt)
             time.sleep(5)
 
     except SystemExit as e:
