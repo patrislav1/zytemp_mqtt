@@ -30,6 +30,9 @@ class ZyTemp():
         self.h.send_feature_report(b'\xc4\xc6\xc0\x92\x40\x23\xdc\x96')
         self.measurements_to_ignore = IGNORE_N_MEASUREMENTS
 
+    def __del__(self):
+        self.h.close()
+
     def run(self):
         while True:
             try:
