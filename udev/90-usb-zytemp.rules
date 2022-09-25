@@ -1,0 +1,2 @@
+# Enable non-root access for Holtek USB-zyTemp devices
+SUBSYSTEM == "usb", ATTRS{idVendor} == "04d9", ATTRS{idProduct} == "a052", MODE = "0666"
