@@ -3,6 +3,7 @@
 import hid
 import sys
 import time
+import logging as log
 
 CO2_USB_MFG = 'Holtek'
 CO2_USB_PRD = 'USB-zyTemp'
@@ -38,20 +39,20 @@ class ZyTemp():
             try:
                 r = self.h.read(8)
             except OSError as err:
-                print(f'OS error: {err}')
+                log.log(log.ERROR, f'OS error: {err}')
                 return
 
             if not r:
-                print(f'Read error')
+                log.log(log.ERROR, f'Read error')
                 self.h.close()
                 return
 
             if r[4] != 0x0d:
-                print(f'Unexpected data from device')
+                log.log(log.DEBUG, f'Unexpected data from device')
                 continue
 
             if r[3] != sum(r[0:3]) & 0xff:
-                print(f'Checksum error')
+                log.log(log.ERROR, f'Checksum error')
                 continue
 
             m_type = r[0]
@@ -60,7 +61,7 @@ class ZyTemp():
             try:
                 m = ZyTemp.MEASUREMENTS[m_type]
             except KeyError:
-                #        print(f'Unknown key {m_type:02x}')
+                log.log(log.DEBUG, f'Unknown key {m_type:02x}')
                 continue
 
             m_name, m_unit, m_reading = m['name'], m['unit'], m['conversion'](
@@ -68,8 +69,8 @@ class ZyTemp():
 
             ignore = self.measurements_to_ignore > 0
 
-            print(f'{m_name}: {m_reading:g} {m_unit}' +
-                  (' (ignored)' if ignore else ''))
+            log.log(log.INFO, f'{m_name}: {m_reading:g} {m_unit}' +
+                    (' (ignored)' if ignore else ''))
 
             if m_name == 'CO2' and self.measurements_to_ignore:
                 self.measurements_to_ignore -= 1
@@ -89,15 +90,15 @@ def get_dev():
             ('interface_number', 'path', 'vendor_id', 'product_id')
         )
         path_str = path.decode('utf-8')
-        print(
-            f'Found CO2 sensor at intf. {intf}, {path_str}, VID={vid:04x}, PID={pid:04x}')
+        log.log(log.INFO,
+                f'Found CO2 sensor at intf. {intf}, {path_str}, VID={vid:04x}, PID={pid:04x}')
         p.append(path)
 
     if not p:
-        print('No device found', file=sys.stderr)
+        log.log(log.ERROR, 'No device found')
         return None
 
-    print(f'Using device at {p[0].decode("utf-8")}')
+    log.log(log.INFO, f'Using device at {p[0].decode("utf-8")}')
     h = hid.device()
     h.open_path(path)
 

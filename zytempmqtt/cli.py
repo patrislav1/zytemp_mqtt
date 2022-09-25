@@ -1,8 +1,9 @@
 from .ZyTemp import get_dev
 import time
 import sys
-
 import signal
+import argparse
+import logging as log
 
 
 def signal_handler(signum, frame):
@@ -10,6 +11,15 @@ def signal_handler(signum, frame):
 
 
 def main():
+    parser = argparse.ArgumentParser(
+        description='MQTT interface for Holtek USB-zyTemp CO2 sensors')
+    parser.add_argument('--debug', action='store_true',
+                        help='Debug log level')
+
+    args = parser.parse_args()
+
+    log.basicConfig(level=log.DEBUG if args.debug else log.INFO)
+
     signal.signal(signal.SIGINT, signal_handler)
     try:
         while True:
@@ -21,7 +31,7 @@ def main():
             time.sleep(5)
 
     except SystemExit as e:
-        print('Terminated')
+        log.log(log.INFO, 'Terminated')
 
 
 if __name__ == '__main__':
