@@ -36,6 +36,16 @@ else
     udevadm trigger
 fi
 
+# Create default config
+
+mkdir -p /etc/zytempmqtt
+cat <<'EOF' > /etc/zytempmqtt/config.yaml
+mqtt_host: homeassistant.local
+mqtt_username: user
+mqtt_password: pass
+friendly_name: aircontrol-mini
+EOF
+
 # Add systemd service
 
 SERVICE_PATH=/lib/systemd/system/${SRVNAME}.service
@@ -60,4 +70,4 @@ ExecStart=/usr/bin/python3 -m zytempmqtt
 WantedBy=multi-user.target
 EOF
 
-sudo systemctl daemon-reload
+systemctl daemon-reload

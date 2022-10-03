@@ -24,6 +24,8 @@ class ConfigFile(object):
             os.path.expanduser('~'), '.config', APPLICATION_NAME
         )
         self.cfg_file_path = os.path.join(self.cfg_dir, 'config.yaml')
+        if not os.path.isfile(self.cfg_file_path):
+            self.cfg_file_path = '/etc/zytempmqtt/config.yaml'
 
         try:
             with open(self.cfg_file_path, 'r') as infile:
