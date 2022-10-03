@@ -21,7 +21,7 @@ class ConfigFile(object):
 
     def _initialize(self):
         self.cfg_dir = os.path.join(
-            os.path.expanduser('~'), '.config', APPLICATION_NAME
+            os.path.expanduser('~'), '.config', 'zytempmqtt'
         )
         self.cfg_file_path = os.path.join(self.cfg_dir, 'config.yaml')
         if not os.path.isfile(self.cfg_file_path):
