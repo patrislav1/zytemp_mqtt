@@ -37,6 +37,7 @@ def main():
             time.sleep(5)
 
     except SystemExit as e:
+        mqtt.disconnect()
         log.log(log.INFO, 'Terminated')
 
 
