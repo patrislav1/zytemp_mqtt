@@ -1,9 +1,11 @@
 # https://hackaday.io/project/5301-reverse-engineering-a-low-cost-usb-co-monitor
 
 import hid
+import os
 import sys
 import time
 import logging as log
+from .config import ConfigFile
 
 CO2_USB_MFG = 'Holtek'
 CO2_USB_PRD = 'USB-zyTemp'
@@ -18,23 +20,77 @@ class ZyTemp():
             'name': 'Temperature',
             'unit': '°C',
             'conversion': lambda x: x / 16 - 273.15,
+            'ha_device_class': 'temperature',
+            'ha_icon': 'mdi:thermometer',
         },
         0x50: {
             'name': 'CO2',
             'unit': 'ppm',
             'conversion': lambda x: x,
+            'ha_device_class': 'carbon_dioxide',
+            'ha_icon': 'mdi:molecule-co2',
         },
     }
 
-    def __init__(self, hiddev):
+    def __init__(self, hiddev, mqtt):
+        self.cfg = ConfigFile()
+        self.m = mqtt
         self.h = hiddev
         self.h.send_feature_report(b'\xc4\xc6\xc0\x92\x40\x23\xdc\x96')
         self.measurements_to_ignore = IGNORE_N_MEASUREMENTS
+        self.values = {v['name']: None for v in ZyTemp.MEASUREMENTS.values()}
 
     def __del__(self):
         self.h.close()
 
-    def run(self, mqtt):
+    """ MQTT Discovery for Home Assistant """
+
+    def discovery(self):
+        if not len(self.cfg.discovery_prefix):
+            return
+
+        for meas in ZyTemp.MEASUREMENTS.values():
+            id = os.path.basename(self.cfg.mqtt_topic)
+            config_content = {
+                'device': {
+                    'identifiers': [id],
+                    'manufacturer': CO2_USB_MFG,
+                    'model': CO2_USB_PRD,
+                    'name': self.cfg.friendly_name,
+                },
+                'enabled_by_default': True,
+                'state_class': 'measurement',
+                'device_class': meas['ha_device_class'],
+                'name': ' '.join((self.cfg.friendly_name, meas['name'])),
+                'state_topic': self.cfg.mqtt_topic,
+                'unique_id': '_'.join((id, meas['name'])),
+                'unit_of_measurement': meas['unit'],
+                'value_template': '{{ value_json.%s }}' % meas['name'],
+                'icon': meas['ha_icon']
+            }
+            self.m.publish(
+                os.path.join(
+                    self.cfg.discovery_prefix, 'sensor', config_content['unique_id'], 'config'
+                ),
+                config_content,
+                retain=True
+            )
+
+        self.m.run(0.1)
+
+    def update(self, key, value):
+        if self.values[key] == value:
+            return
+
+        self.values[key] = value
+
+        if any(v is None for v in self.values.values()):
+            return
+
+        self.m.publish(self.cfg.mqtt_topic, self.values)
+
+    def run(self):
+        self.discovery()
         while True:
             try:
                 r = self.h.read(8)
@@ -73,14 +129,14 @@ class ZyTemp():
                     (' (ignored)' if ignore else ''))
 
             if not ignore:
-                mqtt.publish(m_name, m_reading)
-            mqtt.run(0.1)
+                self.update(m_name, m_reading)
+            self.m.run(0.1)
 
             if m_name == 'CO2' and self.measurements_to_ignore:
                 self.measurements_to_ignore -= 1
 
 
-def get_dev():
+def get_hiddev():
     hid_sensors = [
         e for e in hid.enumerate()
         if e['manufacturer_string'] == CO2_USB_MFG
@@ -105,15 +161,4 @@ def get_dev():
     log.log(log.INFO, f'Using device at {p[0].decode("utf-8")}')
     h = hid.device()
     h.open_path(path)
-
-    return ZyTemp(h)
-
-
-if __name__ == '__main__':
-    while True:
-        zt = get_dev()
-        if not zt:
-            time.sleep(5)
-            continue
-        zt.run()
-        time.sleep(5)
+    return h

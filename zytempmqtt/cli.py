@@ -1,4 +1,4 @@
-from .ZyTemp import get_dev
+from .ZyTemp import ZyTemp, get_hiddev
 from .mqtt import MqttClient
 import time
 import sys
@@ -28,11 +28,12 @@ def main():
 
     try:
         while True:
-            zt = get_dev()
-            if not zt:
+            hiddev = get_hiddev()
+            if not hiddev:
                 time.sleep(5)
                 continue
-            zt.run(mqtt)
+            zt = ZyTemp(hiddev, mqtt)
+            zt.run()
             time.sleep(5)
 
     except SystemExit as e:
