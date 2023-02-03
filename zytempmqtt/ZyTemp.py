@@ -162,5 +162,5 @@ def get_hiddev():
 
     l.log(log.INFO, f'Using device at {p[0].decode("utf-8")}')
     h = hid.device()
-    h.open_path(path)
+    h.open_path(p[0])
     return h
