@@ -16,6 +16,16 @@ IGNORE_N_MEASUREMENTS = 5
 l = log.getLogger('zytemp')
 
 
+_CO2MON_MAGIC_WORD = b'Htemp99e'
+_CO2MON_MAGIC_TABLE = (0, 0, 0, 0, 0, 0, 0, 0)
+
+def list_to_longint(x):
+    return sum([val << (i * 8) for i, val in enumerate(x[::-1])])
+
+def longint_to_list(x):
+    return [(x >> i) & 0xFF for i in (56, 48, 40, 32, 24, 16, 8, 0)]
+
+
 class ZyTemp():
     MEASUREMENTS = {
         0x42: {
@@ -38,9 +48,15 @@ class ZyTemp():
         self.cfg = ConfigFile()
         self.m = mqtt
         self.h = hiddev
-        self.h.send_feature_report(b'\xc4\xc6\xc0\x92\x40\x23\xdc\x96')
         self.measurements_to_ignore = IGNORE_N_MEASUREMENTS
         self.values = {v['name']: None for v in ZyTemp.MEASUREMENTS.values()}
+
+        self._magic_word = [((w << 4) & 0xFF) | (w >> 4)
+                            for w in bytearray(_CO2MON_MAGIC_WORD)]
+        self._magic_table = _CO2MON_MAGIC_TABLE
+        self._magic_table_int = list_to_longint(_CO2MON_MAGIC_TABLE)
+
+        self.h.send_feature_report(self._magic_table)
 
     def __del__(self):
         self.h.close()
@@ -104,6 +120,17 @@ class ZyTemp():
                 l.log(log.ERROR, f'Read error')
                 self.h.close()
                 return
+
+            # Rearrange message and convert to long int
+            msg = list_to_longint([r[i] for i in [2, 4, 0, 7, 1, 6, 5, 3]])
+            # XOR with magic_table
+            res = msg ^ self._magic_table_int
+            # Cyclic shift by 3 to the right
+            res = (res >> 3) | ((res << 61) & 0xFFFFFFFFFFFFFFFF)
+            # Convert to list
+            res = longint_to_list(res)
+            # Subtract and convert to uint8
+            r = [(r - mw) & 0xFF for r, mw in zip(res, self._magic_word)]
 
             if r[4] != 0x0d:
                 l.log(log.DEBUG, f'Unexpected data from device')
