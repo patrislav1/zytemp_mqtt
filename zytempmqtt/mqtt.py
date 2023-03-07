@@ -50,8 +50,11 @@ class MqttClient:
                 return [round_floats(x) for x in o]
             return o
         if self.connected:
-            self.client.publish(topic, json.dumps(
+            mi = self.client.publish(topic, json.dumps(
                 round_floats(pkt)), retain=retain)
+            return (mi.rc == mqtt.MQTT_ERR_SUCCESS)
+        else:
+            return False
 
     def run(self, to):
         if not self.connected:
