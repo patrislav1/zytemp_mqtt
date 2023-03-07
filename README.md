@@ -37,6 +37,7 @@ mqtt_client_id: foobar          # MQTT client ID (default: zytemp-mqtt)
 mqtt_topic: /foo/bar            # MQTT topic (default: zytemp-mqtt)
 friendly_name: aircontrol       # Friendly name for HomeAssistant (default: zytemp-mqtt)
 discovery_prefix: homeassistant # Discovery prefix for HomeAssistant (default: homeassistant)
+decrypt: False                  # Decrypt data from zyTemp, may be needed for some devices (default: False)
 ```
 
 ## Home Assistant integration

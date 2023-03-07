@@ -15,6 +15,7 @@ class ConfigFile(object):
         'mqtt_topic': APPLICATION_NAME,
         'friendly_name': APPLICATION_NAME,
         'discovery_prefix': 'homeassistant',
+        'decrypt': False,
     }
 
     _instance = None

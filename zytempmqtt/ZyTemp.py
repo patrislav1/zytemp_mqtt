@@ -56,7 +56,10 @@ class ZyTemp():
         self._magic_table = _CO2MON_MAGIC_TABLE
         self._magic_table_int = list_to_longint(_CO2MON_MAGIC_TABLE)
 
-        self.h.send_feature_report(self._magic_table)
+        if self.cfg.decrypt:
+            self.h.send_feature_report(self._magic_table)
+        else:
+            self.h.send_feature_report(b'\xc4\xc6\xc0\x92\x40\x23\xdc\x96')
 
     def __del__(self):
         self.h.close()
@@ -121,16 +124,17 @@ class ZyTemp():
                 self.h.close()
                 return
 
-            # Rearrange message and convert to long int
-            msg = list_to_longint([r[i] for i in [2, 4, 0, 7, 1, 6, 5, 3]])
-            # XOR with magic_table
-            res = msg ^ self._magic_table_int
-            # Cyclic shift by 3 to the right
-            res = (res >> 3) | ((res << 61) & 0xFFFFFFFFFFFFFFFF)
-            # Convert to list
-            res = longint_to_list(res)
-            # Subtract and convert to uint8
-            r = [(r - mw) & 0xFF for r, mw in zip(res, self._magic_word)]
+            if self.cfg.decrypt:
+                # Rearrange message and convert to long int
+                msg = list_to_longint([r[i] for i in [2, 4, 0, 7, 1, 6, 5, 3]])
+                # XOR with magic_table
+                res = msg ^ self._magic_table_int
+                # Cyclic shift by 3 to the right
+                res = (res >> 3) | ((res << 61) & 0xFFFFFFFFFFFFFFFF)
+                # Convert to list
+                res = longint_to_list(res)
+                # Subtract and convert to uint8
+                r = [(r - mw) & 0xFF for r, mw in zip(res, self._magic_word)]
 
             if r[4] != 0x0d:
                 l.log(log.DEBUG, f'Unexpected data from device')
