@@ -1,10 +1,8 @@
 # https://hackaday.io/project/5301-reverse-engineering-a-low-cost-usb-co-monitor
 
-import hid
 import os
-import sys
-import time
 import logging as log
+import hid
 from .config import ConfigFile
 
 CO2_USB_MFG = 'Holtek'
@@ -19,8 +17,10 @@ l = log.getLogger('zytemp')
 _CO2MON_MAGIC_WORD = b'Htemp99e'
 _CO2MON_MAGIC_TABLE = (0, 0, 0, 0, 0, 0, 0, 0)
 
+
 def list_to_longint(x):
     return sum([val << (i * 8) for i, val in enumerate(x[::-1])])
+
 
 def longint_to_list(x):
     return [(x >> i) & 0xFF for i in (56, 48, 40, 32, 24, 16, 8, 0)]
@@ -74,6 +74,7 @@ class ZyTemp():
         if self.discover_published:
             return
 
+        res = []
         for meas in ZyTemp.MEASUREMENTS.values():
             id = os.path.basename(self.cfg.mqtt_topic)
             config_content = {
@@ -93,15 +94,22 @@ class ZyTemp():
                 'value_template': '{{ value_json.%s }}' % meas['name'],
                 'icon': meas['ha_icon']
             }
-            res = self.m.publish(
+            res_val = self.m.publish(
                 os.path.join(
                     self.cfg.discovery_prefix, 'sensor', config_content['unique_id'], 'config'
                 ),
                 config_content,
                 retain=True
             )
-            if res:
-                self.discover_published = True
+            res.append(res_val)
+
+        if all(res):
+            l.log(
+                log.INFO, f'MQTT discovery published to {self.cfg.mqtt_host}')
+            self.discover_published = True
+        else:
+            l.log(
+                log.INFO, f'MQTT discovery to {self.cfg.mqtt_host} failed - retrying')
 
         self.m.run(0.1)
 
