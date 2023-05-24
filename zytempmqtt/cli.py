@@ -5,6 +5,7 @@ import sys
 import signal
 import argparse
 import logging as log
+from . import __version__
 
 
 def signal_handler(signum, frame):
@@ -20,6 +21,7 @@ def main():
     args = parser.parse_args()
 
     log.basicConfig(level=log.DEBUG if args.debug else log.INFO)
+    log.log(log.INFO, f'zytempmqtt version {__version__}')
 
     signal.signal(signal.SIGINT, signal_handler)
 

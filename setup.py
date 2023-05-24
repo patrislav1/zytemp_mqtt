@@ -8,6 +8,7 @@ Copyright (C) 2022 Patrick Huesmann <info@patrick-huesmann.de>
 
 import setuptools
 from pathlib import Path as path
+from zytempmqtt import __version__
 
 readme_contents = path('./README.md').read_text()
 requirements = path('./requirements.txt').read_text().splitlines()
@@ -15,7 +16,7 @@ packages = setuptools.find_packages(include=['zytempmqtt'])
 
 setuptools.setup(
     name='zytemp_mqtt',
-    version='0.0.2',
+    version=__version__,
     author='Patrick Huesmann',
     author_email='info@patrick-huesmann.de',
     url='https://github.com/patrislav1/zytemp_mqtt',
