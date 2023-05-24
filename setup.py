@@ -15,7 +15,7 @@ packages = setuptools.find_packages(include=['zytempmqtt'])
 
 setuptools.setup(
     name='zytemp_mqtt',
-    version='0.0.1',
+    version='0.0.2',
     author='Patrick Huesmann',
     author_email='info@patrick-huesmann.de',
     url='https://github.com/patrislav1/zytemp_mqtt',
