@@ -50,6 +50,7 @@ class ZyTemp():
         self.h = hiddev
         self.measurements_to_ignore = IGNORE_N_MEASUREMENTS
         self.values = {v['name']: None for v in ZyTemp.MEASUREMENTS.values()}
+        self.discover_published = False
 
         self._magic_word = [((w << 4) & 0xFF) | (w >> 4)
                             for w in bytearray(_CO2MON_MAGIC_WORD)]
@@ -68,6 +69,9 @@ class ZyTemp():
 
     def discovery(self):
         if not len(self.cfg.discovery_prefix):
+            return
+
+        if self.discover_published:
             return
 
         for meas in ZyTemp.MEASUREMENTS.values():
@@ -89,13 +93,15 @@ class ZyTemp():
                 'value_template': '{{ value_json.%s }}' % meas['name'],
                 'icon': meas['ha_icon']
             }
-            self.m.publish(
+            res = self.m.publish(
                 os.path.join(
                     self.cfg.discovery_prefix, 'sensor', config_content['unique_id'], 'config'
                 ),
                 config_content,
                 retain=True
             )
+            if res:
+                self.discover_published = True
 
         self.m.run(0.1)
 
@@ -111,8 +117,8 @@ class ZyTemp():
         self.m.publish(self.cfg.mqtt_topic, self.values)
 
     def run(self):
-        self.discovery()
         while True:
+            self.discovery()
             try:
                 r = self.h.read(8)
             except OSError as err:
