@@ -42,6 +42,13 @@ class ZyTemp():
             'ha_device_class': 'carbon_dioxide',
             'ha_icon': 'mdi:molecule-co2',
         },
+        0x41: {
+            'name': 'Humidity',
+            'unit': '%',
+            'conversion': lambda x: x / 100,
+            'ha_device_class': 'humidity',
+            'ha_icon': 'mdi:water-percent',
+        },
     }
 
     def __init__(self, hiddev, mqtt):
