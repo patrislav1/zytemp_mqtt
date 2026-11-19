@@ -89,6 +89,7 @@ class ZyTemp():
                 'device_class': meas['ha_device_class'],
                 'name': ' '.join((self.cfg.friendly_name, meas['name'])),
                 'state_topic': self.cfg.mqtt_topic,
+                'availability_topic': self.cfg.availability_topic,
                 'unique_id': '_'.join((id, meas['name'])),
                 'unit_of_measurement': meas['unit'],
                 'value_template': '{{ value_json.%s }}' % meas['name'],

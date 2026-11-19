@@ -16,6 +16,7 @@ class MqttClient:
         self.connected = (rc == 0)
         if rc == 0:
             l.log(log.INFO, f'connected to {self.cfg.mqtt_host}')
+            self.client.publish(self.cfg.availability_topic, "online", retain=True)
         else:
             l.log(log.ERROR,
                   f'connection to {self.cfg.mqtt_host} failed: {rc}')
@@ -29,6 +30,8 @@ class MqttClient:
             self.client = mqtt.Client(callback_api_version=mqtt.CallbackAPIVersion.VERSION1, client_id=self.cfg.mqtt_client_id)
         except AttributeError:
             self.client = mqtt.Client(client_id=self.cfg.mqtt_client_id)
+
+        self.client.will_set(self.cfg.availability_topic, "offline", retain=True)
         self.client.on_connect = self.on_connect
         self.client.on_disconnect = self.on_disconnect
         self.client.username_pw_set(

@@ -13,6 +13,7 @@ class ConfigFile(object):
         'mqtt_password': None,
         'mqtt_client_id': APPLICATION_NAME,
         'mqtt_topic': APPLICATION_NAME,
+        'availability_topic': os.path.join(APPLICATION_NAME, 'availability'),
         'friendly_name': APPLICATION_NAME,
         'discovery_prefix': 'homeassistant',
         'decrypt': False,
