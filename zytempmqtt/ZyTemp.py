@@ -129,7 +129,7 @@ class ZyTemp():
         while True:
             self.discovery()
             try:
-                r = self.h.read(8)
+                r = self.h.read(8, timeout_ms = 60 * 1000)
             except OSError as err:
                 l.log(log.ERROR, f'OS error: {err}')
                 return
