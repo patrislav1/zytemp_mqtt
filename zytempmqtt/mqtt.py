@@ -26,7 +26,11 @@ class MqttClient:
         l.log(log.WARN, f'disconnected from {self.cfg.mqtt_host}: {rc}')
 
     def connect(self):
-        self.client = mqtt.Client(client_id=self.cfg.mqtt_client_id)
+        try:
+            self.client = mqtt.Client(callback_api_version=mqtt.CallbackAPIVersion.VERSION1, client_id=self.cfg.mqtt_client_id)
+        except AttributeError:
+            self.client = mqtt.Client(client_id=self.cfg.mqtt_client_id)
+
         self.client.will_set(self.cfg.availability_topic, "offline", retain=True)
         self.client.on_connect = self.on_connect
         self.client.on_disconnect = self.on_disconnect
